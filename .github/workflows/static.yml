@@ -1,0 +1,45 @@
+# 工作流名称：部署静态内容到 GitHub Pages
+name: Deploy static content to Pages
+
+# 触发条件：当代码推送到 "main" 分支，或手动触发时
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: # 允许在 GitHub 网页上手动运行此工作流
+
+# 设置必要的操作权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 并发控制，避免同时有多个部署相互干扰
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+# 具体要执行的工作
+jobs:
+  deploy:
+    # 指定运行环境
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # 部署完成后，这个变量会包含您的网站链接
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 系统作为构建服务器
+    steps:
+      - name: Checkout（检出代码）
+        uses: actions/checkout@v4 # 第一步：获取您仓库里的代码
+
+      - name: Setup Pages（配置 Pages）
+        uses: actions/configure-pages@v4 # 第二步：配置 Pages 环境
+
+      - name: Upload artifact（上传构建产物）
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 上传当前目录下的所有文件作为网站内容
+          # 如果您的网页文件在子目录（如 `docs/` 或 `public/`），请修改为 `path: '您的目录名'`
+          path: '.'
+
+      - name: Deploy to GitHub Pages（部署到 GitHub Pages）
+        id: deployment
+        uses: actions/deploy-pages@v4 # 最后一步：执行部署
